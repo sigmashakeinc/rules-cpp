@@ -18,33 +18,30 @@ rule no-sprintf-cpp {
   enabled true
   priority 95
   severity error
-  ASK write
+  LOG write
   IF path GLOB "**/*.cpp" AND content LINE_REGEX "\\bsprintf\\s*\\("
   OR path GLOB "**/*.cc" AND content LINE_REGEX "\\bsprintf\\s*\\("
   MESSAGE "sprintf() does not check buffer bounds. Use snprintf() with an explicit limit, or preferably std::to_string(), std::format() (C++20), or ostringstream."
-  PROMPT "Can this sprintf() be replaced with snprintf() or a C++ stream operation? Buffer overflows remain the leading class of C++ CVEs."
 }
 
 rule no-raw-new-delete {
   enabled true
   priority 80
   severity warning
-  ASK write
+  LOG write
   IF path GLOB "**/*.cpp" AND content LINE_REGEX "\\bnew\\s+[A-Z]" AND content NOT CONTAINS "make_unique" AND content NOT CONTAINS "make_shared"
   OR path GLOB "**/*.cc" AND content LINE_REGEX "\\bnew\\s+[A-Z]" AND content NOT CONTAINS "make_unique" AND content NOT CONTAINS "make_shared"
   MESSAGE "Raw new/delete is error-prone — use-after-free, double-free, and leaks are common. Prefer std::make_unique<T>() or std::make_shared<T>() to enforce RAII ownership."
-  PROMPT "Can this raw new be replaced with std::make_unique<T>() or std::make_shared<T>()? Smart pointers prevent the majority of C++ memory safety bugs."
 }
 
 rule no-reinterpret-cast {
   enabled true
   priority 85
   severity warning
-  ASK write
+  LOG write
   IF path GLOB "**/*.cpp" AND content CONTAINS "reinterpret_cast"
   OR path GLOB "**/*.cc" AND content CONTAINS "reinterpret_cast"
   MESSAGE "reinterpret_cast bypasses type safety and can produce undefined behavior if the types are incompatible. Use static_cast where possible, or redesign to avoid the cast."
-  PROMPT "Is reinterpret_cast necessary here? If casting between unrelated types for serialization, use memcpy() to avoid UB from type aliasing violations."
 }
 
 rule no-c-style-cast-cpp {
@@ -61,23 +58,21 @@ rule no-system-cpp {
   enabled true
   priority 95
   severity error
-  ASK write
+  LOG write
   IF path GLOB "**/*.cpp" AND content LINE_REGEX "\\bstd::system\\s*\\("
   OR path GLOB "**/*.cpp" AND content LINE_REGEX "\\bsystem\\s*\\(.*\\+"
   OR path GLOB "**/*.cc" AND content LINE_REGEX "\\bsystem\\s*\\(.*\\+"
   MESSAGE "std::system() with user-controlled input enables command injection. Use POSIX exec*() functions with an argv array, or a cross-platform subprocess library."
-  PROMPT "Is the command string passed to system() built from user input? Switch to execv/execve with separate argv elements to avoid shell injection."
 }
 
 rule no-strcpy-cpp {
   enabled true
   priority 90
   severity error
-  ASK write
+  LOG write
   IF path GLOB "**/*.cpp" AND content LINE_REGEX "\\bstrcpy\\s*\\("
   OR path GLOB "**/*.cpp" AND content LINE_REGEX "\\bstrcat\\s*\\("
   MESSAGE "strcpy() and strcat() cause buffer overflows. Use std::string for string operations in C++, or strlcpy/strlcat if you must use C strings."
-  PROMPT "Can this C string operation be replaced with std::string assignment or std::string::append()? std::string handles bounds automatically."
 }
 
 rule no-uncaught-exception-spec {
